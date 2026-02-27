@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        h2 { margin-top: 40px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background: #f4f4f4; }
+        button { padding: 8px 16px; cursor: pointer; }
+        .danger { background: #d9534f; color: white; }
+    </style>
+</head>
+<body>
+
+<h1>🛡️ IM Phishing Detection — Admin</h1>
+
+<h2>📊 Stats</h2>
+<pre id="stats">Loading...</pre>
+
+<h2>🔁 Retrain Model</h2>
+<button class="danger" onclick="retrain()">Trigger Retrain</button>
+<pre id="retrain-status"></pre>
+
+<h2>📩 Messages</h2>
+<table id="messages">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Content</th>
+            <th>Risk</th>
+            <th>Verdict</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<h2>🗳️ Feedback</h2>
+<table id="feedback">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Message ID</th>
+            <th>Phishing</th>
+            <th>Comment</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+async function loadStats() {
+    const res = await fetch("/v1/admin/stats");
+    document.getElementById("stats").textContent =
+        JSON.stringify(await res.json(), null, 2);
+}
+
+async function loadMessages() {
+    const res = await fetch("/v1/admin/messages");
+    const data = await res.json();
+    const tbody = document.querySelector("#messages tbody");
+    tbody.innerHTML = "";
+    data.forEach(m => {
+        tbody.innerHTML += `<tr>
+            <td>${m.id}</td>
+            <td>${m.content}</td>
+            <td>${m.risk_score ?? "-"}</td>
+            <td>${m.verdict ?? "-"}</td>
+        </tr>`;
+    });
+}
+
+async function loadFeedback() {
+    const res = await fetch("/v1/admin/feedback");
+    const data = await res.json();
+    const tbody = document.querySelector("#feedback tbody");
+    tbody.innerHTML = "";
+    data.forEach(f => {
+        tbody.innerHTML += `<tr>
+            <td>${f.id}</td>
+            <td>${f.message_id}</td>
+            <td>${f.is_phishing}</td>
+            <td>${f.comment ?? ""}</td>
+        </tr>`;
+    });
+}
+
+async function retrain() {
+    document.getElementById("retrain-status").textContent = "⏳ Retraining...";
+    const res = await fetch("/v1/admin/retrain", { method: "POST" });
+    document.getElementById("retrain-status").textContent =
+        JSON.stringify(await res.json(), null, 2);
+}
+
+loadStats();
+loadMessages();
+loadFeedback();
+</script>
+
+</body>
+</html>
